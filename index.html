@@ -197,12 +197,41 @@ let currentTab = "classes";
 const AVATARS = ["🎹","🎻","🏊","🏀","⚽","🎨","💃","🥋","🧮","📖","🧪","🤖","🏓","🛼","🎤","♟️"];
 
 /* ---------------- 初始化 ---------------- */
-function initSupabase(){
-  if(window.supabase && window.supabase.createClient){
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return true;
+/* 轻量 REST 客户端：兼容 supabase-js 的 from().select/insert/update/delete 链式调用 */
+function createSupa(baseUrl, key){
+  const H = { "apikey": key, "Authorization": "Bearer " + key, "Content-Type": "application/json" };
+  function builder(table){
+    let method = "GET", body = null, selectCols = "*";
+    const filters = [], orders = [];
+    const api = {
+      select(cols){ if(cols) selectCols = cols; return api; },
+      insert(obj){ method = "POST"; body = obj; return api; },
+      update(obj){ method = "PATCH"; body = obj; return api; },
+      delete(){ method = "DELETE"; return api; },
+      eq(col, val){ filters.push([col, val]); return api; },
+      order(col, opt){ orders.push([col, !(opt && opt.ascending === false)]); return api; },
+      then(onOk){
+        let u = baseUrl.replace(/\/$/,"") + "/rest/v1/" + table + "?select=" + encodeURIComponent(selectCols);
+        for(const [c, v] of filters) u += "&" + c + "=eq." + encodeURIComponent(v);
+        if(orders.length) u += "&order=" + encodeURIComponent(orders.map(([c,a])=>c+"."+(a?"asc":"desc")).join(","));
+        const opt = { method, headers: H };
+        if(body !== null) opt.body = JSON.stringify(body);
+        fetch(u, opt).then(r => r.text().then(txt => {
+          let data = null;
+          if(txt){ try{ data = JSON.parse(txt); }catch(e){ data = txt; } }
+          if(!r.ok) onOk({ data:null, error:{ message:(data&&data.message)||("HTTP "+r.status) } });
+          else onOk({ data, error:null });
+        })).catch(e => onOk({ data:null, error:{ message:String(e) } }));
+      }
+    };
+    return api;
   }
-  return false;
+  return { from: builder };
+}
+
+function initSupabase(){
+  supabase = createSupa(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return !!supabase;
 }
 
 async function boot(){
