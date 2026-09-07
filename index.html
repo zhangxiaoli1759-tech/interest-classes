@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#4F6EF7">
+<title>兴趣班课时管理</title>
+<style>
+  :root{
+    --primary:#4F6EF7;
+    --primary-dark:#3a55d6;
+    --bg:#F4F6FB;
+    --card:#ffffff;
+    --text:#1f2430;
+    --text-sub:#8a90a0;
+    --border:#eceef4;
+    --green:#22a06b;
+    --green-bg:#e6f6ef;
+    --orange:#f59e0b;
+    --orange-bg:#fdf3e3;
+    --red:#e5484d;
+    --red-bg:#fdeaea;
+    --radius:16px;
+    --shadow:0 4px 16px rgba(31,36,48,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative}
+
+  /* 顶栏 */
+  header{
+    position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#4F6EF7,#7a5cf0);
+    color:#fff;padding:16px 16px 0;
+  }
+  .head-top{display:flex;align-items:center;justify-content:space-between}
+  .head-title{font-size:19px;font-weight:700;letter-spacing:.5px}
+  .head-sub{font-size:12px;opacity:.85;margin-top:2px}
+  .status-dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:rgba(255,255,255,.18);
+    padding:4px 10px;border-radius:999px}
+  .status-dot .dot{width:7px;height:7px;border-radius:50%;background:#7dffb0}
+  .status-dot.off .dot{background:#ffd166}
+
+  /* 统计卡 */
+  .stats{display:flex;gap:10px;padding:14px 16px;margin-top:12px}
+  .stat{flex:1;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);
+    border-radius:14px;padding:10px 12px;text-align:center}
+  .stat .v{font-size:22px;font-weight:800;line-height:1.1}
+  .stat .k{font-size:11px;opacity:.9;margin-top:3px}
+
+  /* Tab */
+  .tabs{display:flex;gap:8px;padding:0 16px;margin-top:12px}
+  .tab{flex:1;text-align:center;padding:10px 0;font-size:15px;font-weight:600;color:#c9d0ff;
+    border-radius:12px 12px 0 0;cursor:pointer;transition:.2s;position:relative}
+  .tab.active{color:#fff;background:var(--bg);border-radius:12px 12px 0 0}
+  .tab.active::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--primary);border-radius:3px 3px 0 0}
+  .tab .cnt{font-weight:400;opacity:.7}
+
+  /* 内容区 */
+  main{flex:1;padding:16px 16px 90px}
+  .empty{text-align:center;padding:50px 20px;color:var(--text-sub)}
+  .empty .ico{font-size:46px;margin-bottom:10px}
+  .empty .t{font-weight:600;color:var(--text);font-size:15px;margin-bottom:4px}
+  .empty .s{font-size:13px}
+
+  /* 卡片 */
+  .card{background:var(--card);border-radius:var(--radius);padding:15px 14px;margin-bottom:12px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card .row{display:flex;align-items:center;justify-content:space-between}
+  .card .name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .card .name .avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:17px;flex-shrink:0}
+  .lessons-badge{display:inline-flex;align-items:baseline;gap:3px}
+  .lessons-badge .n{font-size:26px;font-weight:800;color:var(--primary)}
+  .lessons-badge .u{font-size:12px;color:var(--text-sub)}
+  .lessons-badge.low .n{color:var(--orange)}
+  .lessons-badge.empty .n{color:var(--red)}
+  .card .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--text-sub)}
+  .chip.money{background:var(--green-bg);color:var(--green);font-weight:600}
+  .card .ops{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+  .btn{flex:1;border:none;border-radius:10px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:4px;transition:.15s}
+  .btn:active{transform:scale(.96)}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-warn{background:var(--orange-bg);color:#d97706}
+  .btn-ghost{background:var(--bg);color:var(--text-sub)}
+  .btn-danger{background:var(--red-bg);color:var(--red)}
+
+  /* 消课记录 */
+  .rec{display:flex;align-items:center;gap:12px}
+  .rec .rec-ico{width:38px;height:38px;border-radius:11px;background:var(--orange-bg);color:var(--orange);
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0}
+  .rec .rec-main{flex:1;min-width:0}
+  .rec .rec-name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rec .rec-sub{font-size:12px;color:var(--text-sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rec .rec-note{margin-top:4px;font-size:12px;color:var(--text-sub);background:var(--bg);border-radius:8px;padding:4px 8px;
+    display:inline-block;max-width:100%;word-break:break-all}
+  .rec .rec-ded{font-size:16px;font-weight:800;color:var(--orange);white-space:nowrap}
+  .rec .rec-ops{display:flex;gap:6px;flex-shrink:0}
+  .mini-btn{width:30px;height:30px;border:none;border-radius:8px;font-size:14px;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;background:var(--bg);color:var(--text-sub)}
+  .mini-btn.danger{background:var(--red-bg);color:var(--red)}
+
+  /* 浮动按钮 */
+  .fab{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%);
+    width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:28px;
+    box-shadow:0 8px 20px rgba(79,110,247,.45);cursor:pointer;z-index:30;display:flex;align-items:center;justify-content:center}
+  .fab:active{transform:translateX(50%) scale(.92)}
+
+  /* 弹窗 */
+  .mask{position:fixed;inset:0;background:rgba(15,18,30,.5);z-index:50;display:none;align-items:flex-end;justify-content:center;
+    backdrop-filter:blur(2px)}
+  .mask.show{display:flex}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+    animation:up .25s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .sheet h3{font-size:17px;font-weight:700;margin-bottom:16px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;font-weight:500}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:12px;
+    font-size:15px;background:#fafbfd;color:var(--text);outline:none;font-family:inherit}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);background:#fff}
+  .field textarea{resize:none;min-height:64px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sheet .actions{display:flex;gap:10px;margin-top:6px}
+  .sheet .actions .btn{padding:13px 0;font-size:15px;border-radius:12px}
+  .btn-cancel{background:var(--bg);color:var(--text-sub)}
+
+  /* Toast */
+  #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(20,24,35,.92);color:#fff;
+    padding:10px 18px;border-radius:999px;font-size:14px;z-index:100;opacity:0;pointer-events:none;transition:.25s;max-width:86%;
+    text-align:center}
+  #toast.show{opacity:1}
+  #toast.err{background:rgba(229,72,77,.96)}
+  #toast.ok{background:rgba(34,160,107,.96)}
+
+  .loading{text-align:center;padding:40px;color:var(--text-sub);font-size:14px}
+  .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);
+    border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:-3px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="head-top">
+      <div>
+        <div class="head-title">🎨 兴趣班课时管理</div>
+        <div class="head-sub">记录每一笔充值 · 每一次消课</div>
+      </div>
+      <div class="status-dot" id="statusDot"><span class="dot"></span><span id="statusText">连接中…</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="statClasses">–</div><div class="k">兴趣班</div></div>
+      <div class="stat"><div class="v" id="statLessons">–</div><div class="k">剩余课时</div></div>
+      <div class="stat"><div class="v" id="statMonth">–</div><div class="k">本月消课</div></div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="classes" onclick="switchTab('classes')">兴趣班 <span class="cnt" id="tabClassesCnt"></span></div>
+      <div class="tab" data-tab="records" onclick="switchTab('records')">消课记录 <span class="cnt" id="tabRecordsCnt"></span></div>
+    </div>
+  </header>
+
+  <main>
+    <div id="listClasses"></div>
+    <div id="listRecords" style="display:none"></div>
+  </main>
+</div>
+
+<button class="fab" id="fab" onclick="onFab()">＋</button>
+<div id="toast"></div>
+
+<!-- 通用弹窗容器 -->
+<div class="mask" id="mask">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script src="supabase-js.min.js"></script>
+<script>
+/* ================== 配置（部署前确认） ================== */
+const SUPABASE_URL = "https://cbnbbrrfbolwvuejoqmk.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_ANON_KEY_HERE";   // ⚠️ 替换为 Supabase 项目 anon public key
+
+const TABLE_CLASSES = "interest_classes";
+const TABLE_RECORDS = "lesson_records";
+
+let supabase = null;
+let classes = [];
+let records = [];
+let currentTab = "classes";
+
+const AVATARS = ["🎹","🎻","🏊","🏀","⚽","🎨","💃","🥋","🧮","📖","🧪","🤖","🏓","🛼","🎤","♟️"];
+
+/* ---------------- 初始化 ---------------- */
+function initSupabase(){
+  if(window.supabase && window.supabase.createClient){
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  }
+  return false;
+}
+
+async function boot(){
+  if(SUPABASE_ANON_KEY === "PASTE_ANON_KEY_HERE"){
+    setStatus(false, "未配置密钥");
+    toast("请先在代码里填入 Supabase anon key", "err");
+    renderClasses(); renderRecords(); return;
+  }
+  if(!initSupabase()){
+    setStatus(false, "SDK 加载失败");
+    toast("Supabase SDK 加载失败", "err");
+    return;
+  }
+  await refresh();
+}
+
+async function refresh(){
+  try{
+    const [c, r] = await Promise.all([
+      supabase.from(TABLE_CLASSES).select("*").order("created_at", {ascending:true}),
+      supabase.from(TABLE_RECORDS).select("*").order("consume_time", {ascending:false}).order("created_at", {ascending:false})
+    ]);
+    if(c.error) throw c.error;
+    if(r.error) throw r.error;
+    classes = c.data || [];
+    records = r.data || [];
+    setStatus(true, "已连接");
+  }catch(e){
+    console.error(e);
+    setStatus(false, "连接失败");
+    toast("连接数据库失败：" + (e.message||e), "err");
+  }
+  renderAll();
+}
+
+function setStatus(ok, txt){
+  const d = document.getElementById("statusDot");
+  d.className = "status-dot" + (ok ? "" : " off");
+  document.getElementById("statusText").textContent = txt;
+}
+
+/* ---------------- 渲染 ---------------- */
+function renderAll(){
+  renderClasses(); renderRecords(); renderStats();
+}
+
+function renderStats(){
+  document.getElementById("statClasses").textContent = classes.length;
+  document.getElementById("statLessons").textContent = classes.reduce((s,c)=>s+(c.lesson_count||0),0);
+  const now = new Date(); const ym = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+  document.getElementById("statMonth").textContent = records.filter(r=>(r.consume_time||"").startsWith(ym)).length;
+  document.getElementById("tabClassesCnt").textContent = classes.length ? `(${classes.length})` : "";
+  document.getElementById("tabRecordsCnt").textContent = records.length ? `(${records.length})` : "";
+}
+
+function avatarFor(name){
+  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0;
+  return AVATARS[h % AVATARS.length];
+}
+function fmtMoney(n){ return n==null||n==="" ? "—" : "¥"+Number(n).toLocaleString("zh-CN",{maximumFractionDigits:2}); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+function renderClasses(){
+  const el = document.getElementById("listClasses");
+  if(!classes.length){
+    el.innerHTML = `<div class="empty"><div class="ico">🎒</div><div class="t">还没有兴趣班</div><div class="s">点右下角 ＋ 添加第一个兴趣班吧</div></div>`;
+    return;
+  }
+  el.innerHTML = classes.map(c=>{
+    const lc = c.lesson_count||0;
+    const badgeCls = lc<=0 ? "empty" : (lc<=3 ? "low" : "");
+    return `<div class="card">
+      <div class="row">
+        <div class="name"><span class="avatar" style="background:#eef1ff">${avatarFor(c.name)}</span>${esc(c.name)}</div>
+        <div class="lessons-badge ${badgeCls}"><span class="n">${lc}</span><span class="u">课时</span></div>
+      </div>
+      <div class="meta">
+        <span class="chip money">${fmtMoney(c.recharge_amount)}</span>
+        <span class="chip">📅 ${esc(c.recharge_time||"未记录")}</span>
+        <span class="chip">⏱ 创建于 ${(c.created_at||"").slice(0,10)}</span>
+      </div>
+      <div class="ops">
+        <button class="btn btn-primary" onclick="openConsume(${c.id})">✏️ 消课</button>
+        <button class="btn btn-warn" onclick="openRecharge(${c.id})">💰 充值</button>
+        <button class="btn btn-ghost" onclick="openClassForm(${c.id})">编辑</button>
+        <button class="btn btn-danger" onclick="delClass(${c.id})">删除</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderRecords(){
+  const el = document.getElementById("listRecords");
+  if(!records.length){
+    el.innerHTML = `<div class="empty"><div class="ico">📒</div><div class="t">还没有消课记录</div><div class="s">上完一节课就记一笔，课时会自动 -1</div></div>`;
+    return;
+  }
+  el.innerHTML = records.map(r=>{
+    const cls = classes.find(c=>c.id===r.class_id);
+    const name = cls ? cls.name : (r.class_name||"未知");
+    const note = r.note ? `<span class="rec-note">${esc(r.note)}</span>` : "";
+    return `<div class="card rec">
+      <div class="rec-ico">-${r.deduct_count||1}</div>
+      <div class="rec-main">
+        <div class="rec-name">${esc(name)}</div>
+        <div class="rec-sub">${esc(r.consume_time||"")}${r.created_at ? " · 记录于 "+r.created_at.slice(0,16) : ""}</div>
+        ${note}
+      </div>
+      <div class="rec-ops">
+        <button class="mini-btn" onclick="openRecordForm(${r.id})" title="编辑">✏️</button>
+        <button class="mini-btn danger" onclick="delRecord(${r.id})" title="删除">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* ---------------- Tab & FAB ---------------- */
+function switchTab(t){
+  currentTab = t;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active", x.dataset.tab===t));
+  document.getElementById("listClasses").style.display = t==="classes"?"":"none";
+  document.getElementById("listRecords").style.display = t==="records"?"":"none";
+  document.getElementById("fab").textContent = t==="classes" ? "＋" : "＋";
+}
+function onFab(){
+  if(currentTab==="classes") openClassForm(null);
+  else openRecordForm(null);
+}
+
+/* ---------------- 弹窗 ---------------- */
+function openSheet(html){
+  document.getElementById("sheet").innerHTML = html;
+  document.getElementById("mask").classList.add("show");
+}
+function closeSheet(){ document.getElementById("mask").classList.remove("show"); }
+document.getElementById("mask").addEventListener("click", e=>{ if(e.target.id==="mask") closeSheet(); });
+
+function toast(msg, type){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = (type==="err"?"err":type==="ok"?"ok":"");
+  t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+
+/* ---------------- 兴趣班 增删改查 ---------------- */
+function openClassForm(id){
+  const c = id!=null ? classes.find(x=>x.id===id) : null;
+  openSheet(`
+    <h3>${c?"编辑兴趣班":"新增兴趣班"}</h3>
+    <div class="field"><label>兴趣班名称 *</label><input id="f_name" value="${c?esc(c.name):""}" placeholder="如：钢琴、游泳、围棋"></div>
+    <div class="grid2">
+      <div class="field"><label>充值金额（元）</label><input id="f_amt" type="number" inputmode="decimal" value="${c&&c.recharge_amount!=null?c.recharge_amount:""}" placeholder="0.00"></div>
+      <div class="field"><label>充值时间</label><input id="f_time" type="date" value="${c?(c.recharge_time||""):today()}"></div>
+    </div>
+    <div class="field"><label>课时数（剩余）*</label><input id="f_lessons" type="number" inputmode="numeric" value="${c?(c.lesson_count??0):""}" placeholder="如：20"></div>
+    <div class="actions">
+      <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" onclick="saveClass(${c?c.id:"null"})">保存</button>
+    </div>
+  `);
+}
+
+async function saveClass(id){
+  const name = document.getElementById("f_name").value.trim();
+  const amt = document.getElementById("f_amt").value;
+  const time = document.getElementById("f_time").value;
+  const lessons = parseInt(document.getElementById("f_lessons").value, 10);
+  if(!name){ toast("请填写兴趣班名称", "err"); return; }
+  if(isNaN(lessons) || lessons<0){ toast("请填写正确的课时数", "err"); return; }
+  const payload = {
+    name,
+    recharge_amount: amt==="" ? 0 : parseFloat(amt),
+    recharge_time: time || today(),
+    lesson_count: lessons
+  };
+  let res;
+  if(id!=null){
+    res = await supabase.from(TABLE_CLASSES).update(payload).eq("id", id);
+  }else{
+    res = await supabase.from(TABLE_CLASSES).insert(payload);
+  }
+  if(res.error){ toast("保存失败："+res.error.message, "err"); return; }
+  toast(id!=null?"已更新":"已添加", "ok");
+  closeSheet(); await refresh();
+}
+
+/* 充值：课时数 + 充值金额 */
+function openRecharge(id){
+  const c = classes.find(x=>x.id===id); if(!c) return;
+  openSheet(`
+    <h3>💰 充值 · ${esc(c.name)}</h3>
+    <div class="field"><label>当前剩余课时</label><input disabled value="${c.lesson_count||0}"></div>
+    <div class="grid2">
+      <div class="field"><label>本次充值金额（元）</label><input id="r_amt" type="number" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>本次购买课时数 *</label><input id="r_lessons" type="number" inputmode="numeric" placeholder="如：20"></div>
+    </div>
+    <div class="field"><label>充值时间</label><input id="r_time" type="date" value="${today()}"></div>
+    <div class="actions">
+      <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" onclick="doRecharge(${c.id})">确认充值</button>
+    </div>
+  `);
+}
+
+async function doRecharge(id){
+  const c = classes.find(x=>x.id===id); if(!c) return;
+  const amt = document.getElementById("r_amt").value;
+  const add = parseInt(document.getElementById("r_lessons").value, 10);
+  const time = document.getElementById("r_time").value || today();
+  if(isNaN(add) || add<=0){ toast("请填写本次购买课时数", "err"); return; }
+  const res = await supabase.from(TABLE_CLASSES).update({
+    lesson_count: (c.lesson_count||0) + add,
+    recharge_amount: amt==="" ? (c.recharge_amount||0) : parseFloat(amt),
+    recharge_time: time
+  }).eq("id", id);
+  if(res.error){ toast("充值失败："+res.error.message, "err"); return; }
+  toast(`充值成功，+${add} 课时`, "ok");
+  closeSheet(); await refresh();
+}
+
+async function delClass(id){
+  const c = classes.find(x=>x.id===id); if(!c) return;
+  const cnt = records.filter(r=>r.class_id===id).length;
+  if(!confirm(`确定删除「${c.name}」？${cnt?`\n其 ${cnt} 条消课记录也会一并删除。`:""}`)) return;
+  // 先删记录，再删班级
+  if(cnt){ const rd = await supabase.from(TABLE_RECORDS).delete().eq("class_id", id); if(rd.error){ toast("删除失败："+rd.error.message,"err"); return; } }
+  const res = await supabase.from(TABLE_CLASSES).delete().eq("id", id);
+  if(res.error){ toast("删除失败："+res.error.message, "err"); return; }
+  toast("已删除", "ok"); await refresh();
+}
+
+/* ---------------- 消课记录 增删改查 ---------------- */
+function openConsume(id){
+  const c = classes.find(x=>x.id===id); if(!c) return;
+  if((c.lesson_count||0) <= 0){ toast("「"+c.name+"」已无剩余课时", "err"); return; }
+  openSheet(`
+    <h3>✏️ 消课 · ${esc(c.name)}</h3>
+    <div class="field"><label>当前剩余课时</label><input disabled value="${c.lesson_count||0}"></div>
+    <div class="grid2">
+      <div class="field"><label>扣除课时数 *</label><input id="c_ded" type="number" inputmode="numeric" value="1" min="1"></div>
+      <div class="field"><label>消课时间</label><input id="c_time" type="date" value="${today()}"></div>
+    </div>
+    <div class="field"><label>备注</label><textarea id="c_note" placeholder="如：第 3 节课、补课…"></textarea></div>
+    <div class="actions">
+      <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" onclick="doConsume(${c.id})">确认消课</button>
+    </div>
+  `);
+}
+
+async function doConsume(classId){
+  const c = classes.find(x=>x.id===classId); if(!c) return;
+  const ded = parseInt(document.getElementById("c_ded").value, 10);
+  const time = document.getElementById("c_time").value || today();
+  const note = document.getElementById("c_note").value.trim();
+  if(isNaN(ded) || ded<=0){ toast("请填写正确的扣除数", "err"); return; }
+  if((c.lesson_count||0) < ded){ toast("剩余课时不足（仅 "+(c.lesson_count||0)+" 课时）", "err"); return; }
+
+  // 1) 扣减课时
+  const upd = await supabase.from(TABLE_CLASSES).update({ lesson_count: (c.lesson_count||0) - ded }).eq("id", classId);
+  if(upd.error){ toast("消课失败："+upd.error.message, "err"); return; }
+  // 2) 写消课记录
+  const ins = await supabase.from(TABLE_RECORDS).insert({
+    class_id: classId,
+    class_name: c.name,
+    deduct_count: ded,
+    consume_time: time,
+    note
+  });
+  if(ins.error){
+    // 回滚
+    await supabase.from(TABLE_CLASSES).update({ lesson_count: c.lesson_count }).eq("id", classId);
+    toast("消课失败："+ins.error.message, "err"); return;
+  }
+  toast(`消课成功，-${ded} 课时`, "ok");
+  closeSheet(); await refresh();
+}
+
+function openRecordForm(id){
+  const r = id!=null ? records.find(x=>x.id===id) : null;
+  const opts = ["<option value=''>请选择兴趣班</option>"]
+    .concat(classes.map(c=>`<option value="${c.id}" ${r&&r.class_id===c.id?"selected":""}>${esc(c.name)}（剩 ${c.lesson_count||0} 课时）</option>`)).join("");
+  openSheet(`
+    <h3>${r?"编辑消课记录":"新增消课记录"}</h3>
+    <div class="field"><label>兴趣班 *</label><select id="rf_class">${opts}</select></div>
+    <div class="grid2">
+      <div class="field"><label>扣除课时数 *</label><input id="rf_ded" type="number" inputmode="numeric" value="${r?r.deduct_count:1}" min="1"></div>
+      <div class="field"><label>消课时间</label><input id="rf_time" type="date" value="${r?(r.consume_time||""):today()}"></div>
+    </div>
+    <div class="field"><label>备注</label><textarea id="rf_note">${r?esc(r.note||""):""}</textarea></div>
+    <div class="actions">
+      <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" onclick="saveRecord(${r?r.id:"null"})">保存</button>
+    </div>
+  `);
+}
+
+async function saveRecord(id){
+  const classId = parseInt(document.getElementById("rf_class").value, 10);
+  const ded = parseInt(document.getElementById("rf_ded").value, 10);
+  const time = document.getElementById("rf_time").value || today();
+  const note = document.getElementById("rf_note").value.trim();
+  if(!classId){ toast("请选择兴趣班", "err"); return; }
+  if(isNaN(ded) || ded<=0){ toast("请填写正确的扣除数", "err"); return; }
+  const c = classes.find(x=>x.id===classId);
+  if(!c){ toast("兴趣班不存在", "err"); return; }
+
+  if(id!=null){
+    // 编辑：只改记录，不动课时（如需调整课时请回到兴趣班编辑）
+    const res = await supabase.from(TABLE_RECORDS).update({
+      class_id: classId, class_name: c.name, deduct_count: ded, consume_time: time, note
+    }).eq("id", id);
+    if(res.error){ toast("保存失败："+res.error.message, "err"); return; }
+  }else{
+    if((c.lesson_count||0) < ded){ toast("剩余课时不足（仅 "+(c.lesson_count||0)+" 课时）", "err"); return; }
+    const upd = await supabase.from(TABLE_CLASSES).update({ lesson_count: (c.lesson_count||0) - ded }).eq("id", classId);
+    if(upd.error){ toast("消课失败："+upd.error.message, "err"); return; }
+    const ins = await supabase.from(TABLE_RECORDS).insert({
+      class_id: classId, class_name: c.name, deduct_count: ded, consume_time: time, note
+    });
+    if(ins.error){ await supabase.from(TABLE_CLASSES).update({ lesson_count: c.lesson_count }).eq("id", classId); toast("消课失败："+ins.error.message, "err"); return; }
+  }
+  toast("已保存", "ok"); closeSheet(); await refresh();
+}
+
+async function delRecord(id){
+  const r = records.find(x=>x.id===id); if(!r) return;
+  if(!confirm("确定删除这条消课记录？\n（不会自动补回课时，如需补回请到兴趣班编辑课时数）")) return;
+  const res = await supabase.from(TABLE_RECORDS).delete().eq("id", id);
+  if(res.error){ toast("删除失败："+res.error.message, "err"); return; }
+  toast("已删除", "ok"); await refresh();
+}
+
+/* ---------------- 工具 ---------------- */
+function today(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+boot();
+</script>
+</body>
+</html>
