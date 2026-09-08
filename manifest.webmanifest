@@ -1,0 +1,16 @@
+{
+  "name": "兴趣班课时管理",
+  "short_name": "兴趣班",
+  "description": "记录孩子兴趣班充值与消课课时",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#4F6EF7",
+  "theme_color": "#4F6EF7",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
