@@ -94,6 +94,10 @@
   .btn-warn{background:var(--orange-bg);color:#d97706}
   .btn-ghost{background:var(--bg);color:var(--text-sub)}
   .btn-danger{background:var(--red-bg);color:var(--red)}
+  .status-badge{display:inline-flex;align-items:center;font-size:13px;font-weight:700;padding:4px 11px;border-radius:999px;white-space:nowrap}
+  .status-badge.active{background:var(--green-bg);color:var(--green)}
+  .status-badge.expired{background:var(--red-bg);color:var(--red)}
+  .status-badge.upcoming{background:#eef1ff;color:var(--primary)}
 
   /* 消课记录 */
   .rec{display:flex;align-items:center;gap:12px}
@@ -283,7 +287,7 @@ function renderAll(){
 
 function renderStats(){
   document.getElementById("statClasses").textContent = classes.length;
-  document.getElementById("statLessons").textContent = classes.reduce((s,c)=>s+(c.lesson_count||0),0);
+  document.getElementById("statLessons").textContent = classes.reduce((s,c)=> s + (c.type==="period"?0:(c.lesson_count||0)), 0);
   const now = new Date(); const ym = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
   document.getElementById("statMonth").textContent = records.filter(r=>(r.consume_time||"").startsWith(ym)).length;
   document.getElementById("tabClassesCnt").textContent = classes.length ? `(${classes.length})` : "";
@@ -297,6 +301,14 @@ function avatarFor(name){
 function fmtMoney(n){ return n==null||n==="" ? "—" : "¥"+Number(n).toLocaleString("zh-CN",{maximumFractionDigits:2}); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
 
+function classStatus(c){
+  const t = today();
+  if(!c.start_date) return null;
+  if(t < c.start_date) return {txt:"未开始", cls:"upcoming"};
+  if(t > c.end_date) return {txt:"已过期", cls:"expired"};
+  return {txt:"进行中", cls:"active"};
+}
+
 function renderClasses(){
   const el = document.getElementById("listClasses");
   if(!classes.length){
@@ -304,6 +316,25 @@ function renderClasses(){
     return;
   }
   el.innerHTML = classes.map(c=>{
+    if(c.type === "period"){
+      const st = classStatus(c);
+      const periodTxt = (c.start_date||"?") + " ~ " + (c.end_date||"?");
+      return `<div class="card">
+        <div class="row">
+          <div class="name"><span class="avatar" style="background:#eef1ff">${avatarFor(c.name)}</span>${esc(c.name)}</div>
+          ${st ? `<span class="status-badge ${st.cls}">${st.txt}</span>` : ""}
+        </div>
+        <div class="meta">
+          <span class="chip money">${fmtMoney(c.recharge_amount)}</span>
+          <span class="chip">📅 ${esc(periodTxt)}</span>
+        </div>
+        <div class="ops">
+          <button class="btn btn-warn" onclick="openRecharge(${c.id})">💰 充值</button>
+          <button class="btn btn-ghost" onclick="openClassForm(${c.id})">编辑</button>
+          <button class="btn btn-danger" onclick="delClass(${c.id})">删除</button>
+        </div>
+      </div>`;
+    }
     const lc = c.lesson_count||0;
     const badgeCls = lc<=0 ? "empty" : (lc<=3 ? "low" : "");
     return `<div class="card">
@@ -380,16 +411,39 @@ function toast(msg, type){
 }
 
 /* ---------------- 兴趣班 增删改查 ---------------- */
+function toggleTypeFields(){
+  const isP = document.getElementById("f_type").value === "period";
+  document.getElementById("f_lesson_fields").style.display = isP ? "none" : "";
+  document.getElementById("f_period_fields").style.display = isP ? "" : "none";
+}
+
 function openClassForm(id){
   const c = id!=null ? classes.find(x=>x.id===id) : null;
+  const type = c ? (c.type||"lesson") : "lesson";
+  const isP = type === "period";
   openSheet(`
     <h3>${c?"编辑兴趣班":"新增兴趣班"}</h3>
-    <div class="field"><label>兴趣班名称 *</label><input id="f_name" value="${c?esc(c.name):""}" placeholder="如：钢琴、游泳、围棋"></div>
-    <div class="grid2">
-      <div class="field"><label>充值金额（元）</label><input id="f_amt" type="number" inputmode="decimal" value="${c&&c.recharge_amount!=null?c.recharge_amount:""}" placeholder="0.00"></div>
-      <div class="field"><label>充值时间</label><input id="f_time" type="date" value="${c?(c.recharge_time||""):today()}"></div>
+    <div class="field"><label>兴趣班名称 *</label><input id="f_name" value="${c?esc(c.name):""}" placeholder="如：钢琴、游泳、雪梨英语"></div>
+    <div class="field"><label>类型 *</label>
+      <select id="f_type" onchange="toggleTypeFields()">
+        <option value="lesson" ${!isP?"selected":""}>课时型（按课时消课）</option>
+        <option value="period" ${isP?"selected":""}>周期型（按起止日期，无消课）</option>
+      </select>
     </div>
-    <div class="field"><label>课时数（剩余）*</label><input id="f_lessons" type="number" inputmode="numeric" value="${c?(c.lesson_count??0):""}" placeholder="如：20"></div>
+    <div id="f_lesson_fields" style="${isP?"display:none":""}">
+      <div class="grid2">
+        <div class="field"><label>充值金额（元）</label><input id="f_amt" type="number" inputmode="decimal" value="${c&&!isP?(c.recharge_amount!=null?c.recharge_amount:""):""}" placeholder="0.00"></div>
+        <div class="field"><label>充值时间</label><input id="f_time" type="date" value="${c&&!isP?(c.recharge_time||""):today()}"></div>
+      </div>
+      <div class="field"><label>课时数（剩余）*</label><input id="f_lessons" type="number" inputmode="numeric" value="${c&&!isP?(c.lesson_count??0):""}" placeholder="如：20"></div>
+    </div>
+    <div id="f_period_fields" style="${isP?"":"display:none"}">
+      <div class="grid2">
+        <div class="field"><label>充值金额（元）</label><input id="f_amt_p" type="number" inputmode="decimal" value="${c&&isP?(c.recharge_amount!=null?c.recharge_amount:""):""}" placeholder="0.00"></div>
+        <div class="field"><label>开始日期</label><input id="f_start" type="date" value="${c&&isP?(c.start_date||""):today()}"></div>
+      </div>
+      <div class="field"><label>结束日期</label><input id="f_end" type="date" value="${c&&isP?(c.end_date||""):""}"></div>
+    </div>
     <div class="actions">
       <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" onclick="saveClass(${c?c.id:"null"})">保存</button>
@@ -399,17 +453,29 @@ function openClassForm(id){
 
 async function saveClass(id){
   const name = document.getElementById("f_name").value.trim();
-  const amt = document.getElementById("f_amt").value;
-  const time = document.getElementById("f_time").value;
-  const lessons = parseInt(document.getElementById("f_lessons").value, 10);
+  const type = document.getElementById("f_type").value;
   if(!name){ toast("请填写兴趣班名称", "err"); return; }
-  if(isNaN(lessons) || lessons<0){ toast("请填写正确的课时数", "err"); return; }
-  const payload = {
-    name,
-    recharge_amount: amt==="" ? 0 : parseFloat(amt),
-    recharge_time: time || today(),
-    lesson_count: lessons
-  };
+  const amtRaw = type==="period" ? document.getElementById("f_amt_p").value : document.getElementById("f_amt").value;
+  const amtVal = amtRaw==="" ? 0 : parseFloat(amtRaw);
+  if(isNaN(amtVal)){ toast("请填写正确的充值金额", "err"); return; }
+  const payload = { name, type, recharge_amount: amtVal };
+  if(type==="period"){
+    const start = document.getElementById("f_start").value;
+    const end = document.getElementById("f_end").value;
+    if(!start || !end){ toast("请填写开始和结束日期", "err"); return; }
+    if(start > end){ toast("开始日期不能晚于结束日期", "err"); return; }
+    payload.start_date = start;
+    payload.end_date = end;
+    payload.recharge_time = start;
+    payload.lesson_count = 0;
+  }else{
+    const lessons = parseInt(document.getElementById("f_lessons").value, 10);
+    if(isNaN(lessons) || lessons<0){ toast("请填写正确的课时数", "err"); return; }
+    payload.lesson_count = lessons;
+    payload.recharge_time = document.getElementById("f_time").value || today();
+    payload.start_date = null;
+    payload.end_date = null;
+  }
   let res;
   if(id!=null){
     res = await supabase.from(TABLE_CLASSES).update(payload).eq("id", id);
@@ -421,9 +487,22 @@ async function saveClass(id){
   closeSheet(); await refresh();
 }
 
-/* 充值：课时数 + 充值金额 */
+/* 充值：课时型累加金额+课时；周期型只累加金额 */
 function openRecharge(id){
   const c = classes.find(x=>x.id===id); if(!c) return;
+  if(c.type === "period"){
+    openSheet(`
+      <h3>💰 充值 · ${esc(c.name)}</h3>
+      <div class="field"><label>当前累计金额</label><input disabled value="${fmtMoney(c.recharge_amount)}"></div>
+      <div class="field"><label>本次充值金额（元，自动累加）</label><input id="r_amt" type="number" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>充值日期</label><input id="r_time" type="date" value="${today()}"></div>
+      <div class="actions">
+        <button class="btn btn-cancel" onclick="closeSheet()">取消</button>
+        <button class="btn btn-primary" onclick="doRecharge(${c.id})">确认充值</button>
+      </div>
+    `);
+    return;
+  }
   openSheet(`
     <h3>💰 充值 · ${esc(c.name)}</h3>
     <div class="field"><label>当前剩余课时</label><input disabled value="${c.lesson_count||0}"></div>
@@ -442,11 +521,20 @@ function openRecharge(id){
 async function doRecharge(id){
   const c = classes.find(x=>x.id===id); if(!c) return;
   const amt = document.getElementById("r_amt").value;
-  const add = parseInt(document.getElementById("r_lessons").value, 10);
-  const time = document.getElementById("r_time").value || today();
-  if(isNaN(add) || add<=0){ toast("请填写本次购买课时数", "err"); return; }
   const amtVal = amt==="" ? 0 : parseFloat(amt);
   if(isNaN(amtVal)){ toast("请填写正确的充值金额", "err"); return; }
+  const time = document.getElementById("r_time").value || today();
+  if(c.type === "period"){
+    const res = await supabase.from(TABLE_CLASSES).update({
+      recharge_amount: (c.recharge_amount||0) + amtVal,
+      recharge_time: time
+    }).eq("id", id);
+    if(res.error){ toast("充值失败："+res.error.message, "err"); return; }
+    toast(`充值成功，累计 ${fmtMoney((c.recharge_amount||0) + amtVal)}`, "ok");
+    closeSheet(); await refresh(); return;
+  }
+  const add = parseInt(document.getElementById("r_lessons").value, 10);
+  if(isNaN(add) || add<=0){ toast("请填写本次购买课时数", "err"); return; }
   const res = await supabase.from(TABLE_CLASSES).update({
     lesson_count: (c.lesson_count||0) + add,
     recharge_amount: (c.recharge_amount||0) + amtVal,
