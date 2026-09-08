@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#4F6EF7">
+<html lang="zh-CN" data-page-node-id="KzhAnfQc6EQ8OfhxY59lZ6">
+<head data-page-node-id="CbvFpn6CDtJ5yu8mZOV38t">
+<meta charset="UTF-8" data-page-node-id="tNJkdUJHrGppBCgGS2nLTr">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" data-page-node-id="AUKY0MpSfxWg3PTIbzRrir">
+<meta name="theme-color" content="#4F6EF7" data-page-node-id="59QAWNlBKwfBqzSVz50mhU">
 <title>兴趣班课时管理</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-96.png">
 <style>
   :root{
     --primary:#4F6EF7;
@@ -145,39 +149,39 @@
   @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
-<body>
-<div class="app">
-  <header>
-    <div class="head-top">
-      <div>
-        <div class="head-title">🎨 兴趣班课时管理</div>
-        <div class="head-sub">记录每一笔充值 · 每一次消课</div>
+<body data-page-node-id="TJKkhOJlCRW1ZNZaEeqNzq">
+<div class="app" data-page-node-id="7mFeUEWYijRQK4oNiRleYW">
+  <header data-page-node-id="1UpbAFsHWw2V4Vc9GBDrWn">
+    <div class="head-top" data-page-node-id="wU0hFcSVNDID4vndFmv9PB">
+      <div data-page-node-id="Smm3nuPb6RRFcX8Nw5ToRQ">
+        <div class="head-title" data-page-node-id="8Ttmt7IPNEXC4SW3TUSA8w">🎨 兴趣班课时管理</div>
+        <div class="head-sub" data-page-node-id="311AbmiAa5TnjuC2ruAyJc">记录每一笔充值 · 每一次消课</div>
       </div>
-      <div class="status-dot" id="statusDot"><span class="dot"></span><span id="statusText">连接中…</span></div>
+      <div class="status-dot" id="statusDot" data-page-node-id="fJQ5WnhwVdp6xFM2HE9hwa"><span class="dot" data-page-node-id="3nkEguMCsxlTl0IFAMfn3x"></span><span id="statusText" data-page-node-id="vMTnw6AfJCPDEjRaIFpO2r">连接中…</span></div>
     </div>
-    <div class="stats">
-      <div class="stat"><div class="v" id="statClasses">–</div><div class="k">兴趣班</div></div>
-      <div class="stat"><div class="v" id="statLessons">–</div><div class="k">剩余课时</div></div>
-      <div class="stat"><div class="v" id="statMonth">–</div><div class="k">本月消课</div></div>
+    <div class="stats" data-page-node-id="DLa69wijPfzUHGvRLFxMJN">
+      <div class="stat" data-page-node-id="DvPmJij8UFauQcg9UnbM8p"><div class="v" id="statClasses" data-page-node-id="FB8xfRKVfGIHEXuhdZPqTN">–</div><div class="k" data-page-node-id="6pR9pD9XlWUc9PyoZ4cfFC">兴趣班</div></div>
+      <div class="stat" data-page-node-id="RynhlUt5tGuZ34AK2gDKlg"><div class="v" id="statLessons" data-page-node-id="RNzVoB1YnklPRiyw2d67OT">–</div><div class="k" data-page-node-id="EGz68Ixn1jJUoH0TwEz7s9">剩余课时</div></div>
+      <div class="stat" data-page-node-id="k8vDKnEHLT9h28BHFgtKm0"><div class="v" id="statMonth" data-page-node-id="NZC3bG5Oe7BHelvDE1lTfF">–</div><div class="k" data-page-node-id="aXPzaysbTA0MCwYX2MNIU4">本月消课</div></div>
     </div>
-    <div class="tabs">
-      <div class="tab active" data-tab="classes" onclick="switchTab('classes')">兴趣班 <span class="cnt" id="tabClassesCnt"></span></div>
-      <div class="tab" data-tab="records" onclick="switchTab('records')">消课记录 <span class="cnt" id="tabRecordsCnt"></span></div>
+    <div class="tabs" data-page-node-id="BIYxMWHjIDR8i6XKAFfLh7">
+      <div class="tab active" data-tab="classes" onclick="switchTab('classes')" data-page-node-id="CrQQWzXrdkoLQsdyWH7TxY">兴趣班 <span class="cnt" id="tabClassesCnt" data-page-node-id="WDBmnzMw1Us8dNReCLDtCW"></span></div>
+      <div class="tab" data-tab="records" onclick="switchTab('records')" data-page-node-id="rExt6KiwkwlqGDvBLH9AGg">消课记录 <span class="cnt" id="tabRecordsCnt" data-page-node-id="sCjK0N4lEn38bylRlYCckF"></span></div>
     </div>
   </header>
 
-  <main>
-    <div id="listClasses"></div>
-    <div id="listRecords" style="display:none"></div>
+  <main data-page-node-id="FdJjnFSDuR8ZcTxtybEaRs">
+    <div id="listClasses" data-page-node-id="wWVtenNUZpFii7LXGTu6fV"></div>
+    <div id="listRecords" style="display:none" data-page-node-id="jpNT58Atbh6cNle6lDZZMC"></div>
   </main>
 </div>
 
-<button class="fab" id="fab" onclick="onFab()">＋</button>
-<div id="toast"></div>
+<button class="fab" id="fab" onclick="onFab()" data-page-node-id="fe0Dog0ExGXpM0Tvhq2y94">＋</button>
+<div id="toast" data-page-node-id="k3l6eXJ4Zc3aOLFdpjXyAf"></div>
 
 <!-- 通用弹窗容器 -->
-<div class="mask" id="mask">
-  <div class="sheet" id="sheet"></div>
+<div class="mask" id="mask" data-page-node-id="PBhZUcGeIWB5tjTCGtkwSQ">
+  <div class="sheet" id="sheet" data-page-node-id="2V5TWOC9yZdpHExiDplERu"></div>
 </div>
 
 <script>
