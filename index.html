@@ -428,7 +428,7 @@ function openRecharge(id){
     <h3>💰 充值 · ${esc(c.name)}</h3>
     <div class="field"><label>当前剩余课时</label><input disabled value="${c.lesson_count||0}"></div>
     <div class="grid2">
-      <div class="field"><label>本次充值金额（元）</label><input id="r_amt" type="number" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>本次充值金额（元，自动累加）</label><input id="r_amt" type="number" inputmode="decimal" placeholder="0.00"></div>
       <div class="field"><label>本次购买课时数 *</label><input id="r_lessons" type="number" inputmode="numeric" placeholder="如：20"></div>
     </div>
     <div class="field"><label>充值时间</label><input id="r_time" type="date" value="${today()}"></div>
@@ -445,9 +445,11 @@ async function doRecharge(id){
   const add = parseInt(document.getElementById("r_lessons").value, 10);
   const time = document.getElementById("r_time").value || today();
   if(isNaN(add) || add<=0){ toast("请填写本次购买课时数", "err"); return; }
+  const amtVal = amt==="" ? 0 : parseFloat(amt);
+  if(isNaN(amtVal)){ toast("请填写正确的充值金额", "err"); return; }
   const res = await supabase.from(TABLE_CLASSES).update({
     lesson_count: (c.lesson_count||0) + add,
-    recharge_amount: amt==="" ? (c.recharge_amount||0) : parseFloat(amt),
+    recharge_amount: (c.recharge_amount||0) + amtVal,
     recharge_time: time
   }).eq("id", id);
   if(res.error){ toast("充值失败："+res.error.message, "err"); return; }
